@@ -1,9 +1,16 @@
+from pathlib import Path
+import sys
 from typing import Callable, Optional
 
 import gymnasium as gym
 from gymnasium.envs.registration import register
 
 from rl_zoo3.wrappers import MaskVelocityWrapper
+
+run_dir = str(Path.cwd() / "run")
+sys.path.append(run_dir)
+
+from tetris_gym import TetrisGymEnv
 
 try:
     import pybullet_envs_gymnasium
@@ -44,6 +51,14 @@ try:
     import minigrid
 except ImportError:
     pass
+
+
+# Register the environment
+register(
+    id="TetrisGym-v0",
+    entry_point=TetrisGymEnv,
+    kwargs={"config": None},
+)
 
 
 # Register no vel envs

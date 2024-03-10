@@ -17,8 +17,16 @@ from stable_baselines3 import A2C, DDPG, DQN, PPO, SAC, TD3
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.sb2_compat.rmsprop_tf_like import RMSpropTFLike  # noqa: F401
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecEnv, VecFrameStack, VecNormalize
+from stable_baselines3.common.sb2_compat.rmsprop_tf_like import (
+    RMSpropTFLike,
+)  # noqa: F401
+from stable_baselines3.common.vec_env import (
+    DummyVecEnv,
+    SubprocVecEnv,
+    VecEnv,
+    VecFrameStack,
+    VecNormalize,
+)
 
 # For custom activation fn
 from torch import nn as nn
@@ -44,7 +52,9 @@ def flatten_dict_observations(env: gym.Env) -> gym.Env:
     return gym.wrappers.FlattenObservation(env)
 
 
-def get_wrapper_class(hyperparams: Dict[str, Any], key: str = "env_wrapper") -> Optional[Callable[[gym.Env], gym.Env]]:
+def get_wrapper_class(
+    hyperparams: Dict[str, Any], key: str = "env_wrapper"
+) -> Optional[Callable[[gym.Env], gym.Env]]:
     """
     Get one or more Gym environment wrapper class specified as a hyper parameter
     "env_wrapper".
@@ -98,8 +108,12 @@ def get_wrapper_class(hyperparams: Dict[str, Any], key: str = "env_wrapper") -> 
                 kwargs = wrapper_dict[wrapper_name]
             else:
                 kwargs = {}
-            wrapper_module = importlib.import_module(get_module_name(wrapper_name))
-            wrapper_class = getattr(wrapper_module, get_class_name(wrapper_name))
+            wrapper_module = importlib.import_module(
+                get_module_name(wrapper_name)
+            )
+            wrapper_class = getattr(
+                wrapper_module, get_class_name(wrapper_name)
+            )
             wrapper_classes.append(wrapper_class)
             wrapper_kwargs.append(kwargs)
 
@@ -277,7 +291,9 @@ def create_test_env(
     return env
 
 
-def linear_schedule(initial_value: Union[float, str]) -> Callable[[float], float]:
+def linear_schedule(
+    initial_value: Union[float, str]
+) -> Callable[[float], float]:
     """
     Linear learning rate schedule.
 
@@ -308,7 +324,9 @@ def get_trained_models(log_folder: str) -> Dict[str, Tuple[str, str]]:
         if not os.path.isdir(os.path.join(log_folder, algo)):
             continue
         for model_folder in os.listdir(os.path.join(log_folder, algo)):
-            args_files = glob.glob(os.path.join(log_folder, algo, model_folder, "*/args.yml"))
+            args_files = glob.glob(
+                os.path.join(log_folder, algo, model_folder, "*/args.yml")
+            )
             if len(args_files) != 1:
                 continue  # we expect only one sub-folder with an args.yml file
             with open(args_files[0]) as fh:
@@ -319,7 +337,9 @@ def get_trained_models(log_folder: str) -> Dict[str, Tuple[str, str]]:
     return trained_models
 
 
-def get_hf_trained_models(organization: str = "sb3", check_filename: bool = False) -> Dict[str, Tuple[str, str]]:
+def get_hf_trained_models(
+    organization: str = "sb3", check_filename: bool = False
+) -> Dict[str, Tuple[str, str]]:
     """
     Get pretrained models,
     available on the Hugginface hub for a given organization.
@@ -338,7 +358,9 @@ def get_hf_trained_models(organization: str = "sb3", check_filename: bool = Fals
     for model in models:
         # Try to extract algorithm and environment id from model card
         try:
-            env_id = model.cardData["model-index"][0]["results"][0]["dataset"]["name"]
+            env_id = model.cardData["model-index"][0]["results"][0]["dataset"][
+                "name"
+            ]
             algo = model.cardData["model-index"][0]["name"].lower()
             # RecurrentPPO alias is "ppo_lstm" in the rl zoo
             if algo == "recurrentppo":
@@ -351,7 +373,10 @@ def get_hf_trained_models(organization: str = "sb3", check_filename: bool = Fals
         model_name = ModelName(algo, env_name)
 
         # check if there is a model file in the repo
-        if check_filename and not any(f.rfilename == model_name.filename for f in api.model_info(model.modelId).siblings):
+        if check_filename and not any(
+            f.rfilename == model_name.filename
+            for f in api.model_info(model.modelId).siblings
+        ):
             continue  # skip model if the repo contains no properly named model file
 
         trained_models[model_name] = (algo, env_id)
@@ -372,7 +397,11 @@ def get_latest_run_id(log_path: str, env_name: EnvironmentName) -> int:
     for path in glob.glob(os.path.join(log_path, env_name + "_[0-9]*")):
         run_id = path.split("_")[-1]
         path_without_run_id = path[: -len(run_id) - 1]
-        if path_without_run_id.endswith(env_name) and run_id.isdigit() and int(run_id) > max_run_id:
+        if (
+            path_without_run_id.endswith(env_name)
+            and run_id.isdigit()
+            and int(run_id) > max_run_id
+        ):
             max_run_id = int(run_id)
     return max_run_id
 
@@ -412,7 +441,10 @@ def get_saved_hyperparams(
                 if test_mode:
                     normalize_kwargs["norm_reward"] = norm_reward
             else:
-                normalize_kwargs = {"norm_obs": hyperparams["normalize"], "norm_reward": norm_reward}
+                normalize_kwargs = {
+                    "norm_obs": hyperparams["normalize"],
+                    "norm_reward": norm_reward,
+                }
             hyperparams["normalize_kwargs"] = normalize_kwargs
     return hyperparams, stats_path
 
@@ -465,12 +497,16 @@ def get_model_path(
         model_path = os.path.join(log_path, "best_model.zip")
         name_prefix = f"best-model-{model_name}"
     elif load_checkpoint is not None:
-        model_path = os.path.join(log_path, f"rl_model_{load_checkpoint}_steps.zip")
+        model_path = os.path.join(
+            log_path, f"rl_model_{load_checkpoint}_steps.zip"
+        )
         name_prefix = f"checkpoint-{load_checkpoint}-{model_name}"
     elif load_last_checkpoint:
         checkpoints = glob.glob(os.path.join(log_path, "rl_model_*_steps.zip"))
         if len(checkpoints) == 0:
-            raise ValueError(f"No checkpoint found for {algo} on {env_name}, path: {log_path}")
+            raise ValueError(
+                f"No checkpoint found for {algo} on {env_name}, path: {log_path}"
+            )
 
         def step_count(checkpoint_path: str) -> int:
             # path follow the pattern "rl_model_*_steps.zip", we count from the back to ignore any other _ in the path
@@ -486,6 +522,8 @@ def get_model_path(
 
     found = os.path.isfile(model_path)
     if not found:
-        raise ValueError(f"No model found for {algo} on {env_name}, path: {model_path}")
+        raise ValueError(
+            f"No model found for {algo} on {env_name}, path: {model_path}"
+        )
 
     return name_prefix, model_path, log_path
