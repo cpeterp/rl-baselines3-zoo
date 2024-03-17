@@ -999,7 +999,7 @@ class ExperimentManager:
                     )
             else:
                 study.optimize(
-                    self.objective, n_jobs=self.n_jobs, n_trials=self.n_trials
+                    self.objective, n_jobs=self.n_jobs, n_trials=self.n_trials, gc_after_trial=True
                 )
         except KeyboardInterrupt:
             pass
